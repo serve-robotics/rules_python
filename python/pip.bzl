@@ -23,6 +23,12 @@ def _pip_import_impl(repository_ctx):
     repository_ctx.file("BUILD", "")
 
     # To see the output, pass: quiet=False
+
+    # This will timeout after a fixed time period no matter the amount of
+    # work that needs to be done, so it can't possibly cover all cases. The
+    # default timeout of 30m for execute() proved too slow for installing a
+    # handful (10 or so) modules on armv8 arch where many of the modules
+    # had some native components compiled. The timeout was tripled to 30m.
     result = repository_ctx.execute([
         "python",
         repository_ctx.path(repository_ctx.attr._script),
@@ -34,7 +40,7 @@ def _pip_import_impl(repository_ctx):
         repository_ctx.path("requirements.bzl"),
         "--directory",
         repository_ctx.path(""),
-    ])
+    ], timeout=1800)
 
     if result.return_code:
         fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
